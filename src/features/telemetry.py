@@ -51,11 +51,11 @@ class TelemetryManager:
         Returns True if successful, False otherwise.
         """
         tasks = [
-            "Microsoft\Windows\Application Experience\Microsoft Compatibility Appraiser",
-            "Microsoft\Windows\Application Experience\ProgramDataUpdater",
-            "Microsoft\Windows\Customer Experience Improvement Program\Consolidator",
-            "Microsoft\Windows\Customer Experience Improvement Program\UsbCeip",
-            "Microsoft\Windows\Customer Experience Improvement Program\KernelCeipTask"
+            r"Microsoft\Windows\Application Experience\Microsoft Compatibility Appraiser",
+            r"Microsoft\Windows\Application Experience\ProgramDataUpdater",
+            r"Microsoft\Windows\Customer Experience Improvement Program\Consolidator",
+            r"Microsoft\Windows\Customer Experience Improvement Program\UsbCeip",
+            r"Microsoft\Windows\Customer Experience Improvement Program\KernelCeipTask"
         ]
         
         success = True
