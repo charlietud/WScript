@@ -45,6 +45,26 @@ class TelemetryManager:
         """
         return self.service.stop_and_disable_service("DiagTrack")
     
+    def task_exists(self, task_name: str) -> bool:
+        """
+        Check if a scheduled task exists.
+        
+        Args:
+            task_name: The name of the task to check
+            
+        Returns:
+            bool: True if the task exists, False otherwise
+        """
+        try:
+            result = subprocess.run(
+                ["schtasks", "/query", "/tn", task_name],
+                capture_output=True,
+                text=True
+            )
+            return result.returncode == 0
+        except subprocess.CalledProcessError:
+            return False
+    
     def disable_telemetry_tasks(self) -> bool:
         """
         Disable telemetry-related scheduled tasks.
@@ -60,12 +80,16 @@ class TelemetryManager:
         
         success = True
         for task in tasks:
-            try:
-                subprocess.run(["schtasks", "/change", "/tn", task, "/disable"], check=True)
-            except subprocess.CalledProcessError as e:
-                print(f"Error disabling task {task}: {str(e)}")
-                success = False
-                break
+            if self.task_exists(task):
+                try:
+                    subprocess.run(["schtasks", "/change", "/tn", task, "/disable"], check=True)
+                    print(f"Successfully disabled task: {task}")
+                except subprocess.CalledProcessError as e:
+                    print(f"Error disabling task {task}: {str(e)}")
+                    success = False
+                    break
+            else:
+                print(f"Task not found: {task}")
         
         return success
     
