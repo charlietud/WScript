@@ -1,4 +1,4 @@
-# Windows System Customization Tool
+# WScript Customization Tool
 
 A Python-based command-line tool for managing Windows system settings and privacy features. This tool provides a clean, efficient way to customize Windows behavior, starting with telemetry management.
 
