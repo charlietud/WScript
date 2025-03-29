@@ -1,0 +1,6 @@
+# Hide python environment files from wscript folder
+wscript/
+
+# Hide pycache files
+__pycache__/
+
