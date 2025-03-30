@@ -1,4 +1,4 @@
-# WScript Customization Tool
+# Windows System Customization Tool
 
 A Python-based command-line tool for managing Windows system settings and privacy features. This tool provides a clean, efficient way to customize Windows behavior, starting with telemetry management.
 
@@ -15,10 +15,6 @@ A Python-based command-line tool for managing Windows system settings and privac
 - Windows 10/11
 - Python 3.6 or higher
 - Administrator privileges
-- Required Python packages:
-  ```
-  pywin32>=305
-  ```
 
 ## Installation
 
@@ -28,10 +24,7 @@ A Python-based command-line tool for managing Windows system settings and privac
    cd wscript
    ```
 
-2. Install required packages:
-   ```bash
-   pip install -r requirements.txt
-   ```
+2. No additional package installation required - the tool uses built-in Python modules.
 
 ## Usage
 
@@ -77,7 +70,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Author
 
-RGra
+Ramham
 
 ## Acknowledgments
 
