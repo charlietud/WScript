@@ -18,7 +18,7 @@ def print_section_header(title):
 def main():
     # Set up argument parser
     parser = argparse.ArgumentParser(
-        description='WScript - Customization and Automation Tool',
+        description='Thank you for using WScript! A tool for disabling Windows telemetry and Cortana. More features to come!',
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
     
@@ -57,7 +57,7 @@ def main():
         print_section_header("Disabling Cortana")
         cortana.disable_all_cortana()
     else:
-        print("No options specified. Use --help to see available options.")
+        print("No options specified. Use one of the following options:")
         print("\nAvailable options:")
         print("  --telemetry    Disable Windows telemetry")
         print("  --cortana     Disable Cortana")
