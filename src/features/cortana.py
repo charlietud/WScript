@@ -2,12 +2,15 @@ import subprocess
 from ..core.admin_check import AdminCheck
 from ..core.registry_manager import RegistryManager
 from ..core.service_manager import ServiceManager
+from ..core.log_manager import LogManager
 
 class CortanaManager:
     def __init__(self):
         self.is_admin = AdminCheck.is_admin()
         self.registry = RegistryManager()
         self.service = ServiceManager()
+        self.log_manager = LogManager()
+        self.logger = self.log_manager.get_logger('Cortana')
     
     def disable_cortana_registry(self) -> bool:
         """
@@ -28,9 +31,13 @@ class CortanaManager:
         
         success = True
         for path in paths:
+            self.logger.info(f"Attempting to modify registry path: {path}")
             if not self.registry.set_multiple_values(path, values):
+                self.log_manager.log_registry_change(self.logger, path, values, False)
                 success = False
                 break
+            else:
+                self.log_manager.log_registry_change(self.logger, path, values, True)
         
         return success
     
@@ -55,9 +62,9 @@ class CortanaManager:
         for task in tasks:
             try:
                 subprocess.run(["schtasks", "/change", "/tn", task, "/disable"], check=True)
-                print(f"Successfully disabled task: {task}")
+                self.log_manager.log_task_change(self.logger, task, "disable", True)
             except subprocess.CalledProcessError as e:
-                print(f"Error disabling task {task}: {str(e)}")
+                self.log_manager.log_task_change(self.logger, task, "disable", False)
                 success = False
                 break
         
@@ -68,10 +75,15 @@ class CortanaManager:
         Disable only safe Cortana features using all available methods.
         Returns True if all operations were successful, False otherwise.
         """
+        self.logger.info("Starting Cortana disable process")
+        
         if not self.is_admin:
+            self.logger.error("Script requires administrator privileges")
             print("This script requires administrator privileges to run properly.")
             return False
         
+        self.logger.info("Warning: This will only disable Cortana personal assistant features")
+        self.logger.info("Core Windows Search functionality will remain intact")
         print("Warning: This will only disable Cortana personal assistant features.")
         print("Core Windows Search functionality will remain intact.")
         
@@ -82,9 +94,11 @@ class CortanaManager:
         
         success = all(results.values())
         if success:
+            self.log_manager.log_operation(self.logger, "Cortana disable", "success", "All features disabled successfully")
             print("\nSuccessfully disabled Cortana personal assistant features!")
             print("Note: Core Windows Search functionality remains active.")
         else:
+            self.log_manager.log_operation(self.logger, "Cortana disable", "error", "Some operations failed")
             print("\nSome operations failed. Check the error messages above.")
         
         return success 

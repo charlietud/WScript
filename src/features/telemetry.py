@@ -2,16 +2,19 @@ import subprocess
 from ..core.admin_check import AdminCheck
 from ..core.registry_manager import RegistryManager
 from ..core.service_manager import ServiceManager
+from ..core.log_manager import LogManager
 
 class TelemetryManager:
     def __init__(self):
         self.is_admin = AdminCheck.is_admin()
         self.registry = RegistryManager()
         self.service = ServiceManager()
+        self.log_manager = LogManager()
+        self.logger = self.log_manager.get_logger('Telemetry')
     
     def disable_telemetry_registry(self) -> bool:
         """
-        Disable Windows telemetry through registry modifications.
+        Disable telemetry through registry modifications.
         Returns True if successful, False otherwise.
         """
         # Registry paths for telemetry settings
@@ -25,25 +28,32 @@ class TelemetryManager:
         values = {
             "DiagTrackAuthorization": 1,
             "AllowTelemetry": 0,
+            "MaxTelemetryAllowed": 0,
             "AllowDeviceNameInTelemetry": 0,
-            "AllowTelemetry": 0,
-            "MaxTelemetryAllowed": 0
+            "AllowTelemetryToBeSent": 0
         }
         
         success = True
         for path in paths:
+            self.logger.info(f"Attempting to modify registry path: {path}")
             if not self.registry.set_multiple_values(path, values):
+                self.log_manager.log_registry_change(self.logger, path, values, False)
                 success = False
                 break
+            else:
+                self.log_manager.log_registry_change(self.logger, path, values, True)
         
         return success
     
     def disable_telemetry_service(self) -> bool:
         """
-        Disable the Windows telemetry service (DiagTrack).
+        Disable the telemetry service.
         Returns True if successful, False otherwise.
         """
-        return self.service.stop_and_disable_service("DiagTrack")
+        service_name = "DiagTrack"
+        success = self.service.stop_and_disable_service(service_name)
+        self.log_manager.log_service_change(self.logger, service_name, "stop and disable", success)
+        return success
     
     def task_exists(self, task_name: str) -> bool:
         """
@@ -61,8 +71,11 @@ class TelemetryManager:
                 capture_output=True,
                 text=True
             )
-            return result.returncode == 0
+            exists = result.returncode == 0
+            self.logger.info(f"Task '{task_name}' exists: {exists}")
+            return exists
         except subprocess.CalledProcessError:
+            self.logger.error(f"Error checking task '{task_name}'")
             return False
     
     def disable_telemetry_tasks(self) -> bool:
@@ -83,13 +96,13 @@ class TelemetryManager:
             if self.task_exists(task):
                 try:
                     subprocess.run(["schtasks", "/change", "/tn", task, "/disable"], check=True)
-                    print(f"Successfully disabled task: {task}")
+                    self.log_manager.log_task_change(self.logger, task, "disable", True)
                 except subprocess.CalledProcessError as e:
-                    print(f"Error disabling task {task}: {str(e)}")
+                    self.log_manager.log_task_change(self.logger, task, "disable", False)
                     success = False
                     break
             else:
-                print(f"Task not found: {task}")
+                self.logger.info(f"Task not found: {task}")
         
         return success
     
@@ -98,7 +111,10 @@ class TelemetryManager:
         Disable all telemetry features using all available methods.
         Returns True if all operations were successful, False otherwise.
         """
+        self.logger.info("Starting telemetry disable process")
+        
         if not self.is_admin:
+            self.logger.error("Script requires administrator privileges")
             print("This script requires administrator privileges to run properly.")
             return False
         
@@ -110,8 +126,10 @@ class TelemetryManager:
         
         success = all(results.values())
         if success:
-            print("Successfully disabled all telemetry features!")
+            self.log_manager.log_operation(self.logger, "Telemetry disable", "success", "All telemetry features disabled successfully")
+            print("\nSuccessfully disabled all telemetry features!")
         else:
-            print("Some operations failed. Check the error messages above.")
+            self.log_manager.log_operation(self.logger, "Telemetry disable", "error", "Some operations failed")
+            print("\nSome operations failed. Check the error messages above.")
         
         return success 
