@@ -145,32 +145,26 @@ class CortanaManager:
     
     def disable_cortana_service(self) -> bool:
         """
-        Disable the Cortana service.
+        Disable only the Cortana service while keeping Windows Search service intact.
         Returns True if successful, False otherwise.
         """
-        return self.service.stop_and_disable_service("Cortana")
-    
-    def disable_cortana_tasks(self) -> bool:
-        """
-        Disable only Cortana-specific scheduled tasks that don't affect core Windows functionality.
-        Returns True if successful, False otherwise.
-        """
-        # Only disable Cortana-specific tasks, not Windows Search tasks
-        tasks = [
-            r"Microsoft\Windows\Windows Search\CortanaConsent"
-        ]
+        # Only disable Cortana service, not Windows Search service
+        service_name = "Cortana"
         
-        success = True
-        for task in tasks:
-            try:
-                subprocess.run(["schtasks", "/change", "/tn", task, "/disable"], check=True)
-                self.log_manager.log_task_change(self.logger, task, "disable", True)
-            except subprocess.CalledProcessError as e:
-                self.log_manager.log_task_change(self.logger, task, "disable", False)
-                success = False
-                break
-        
-        return success
+        try:
+            # First try to stop the service
+            subprocess.run(["sc", "stop", service_name], check=True)
+            self.logger.info(f"Stopped {service_name} service")
+            
+            # Then disable it
+            subprocess.run(["sc", "config", service_name, "start=disabled"], check=True)
+            self.logger.info(f"Disabled {service_name} service")
+            
+            self.log_manager.log_service_change(self.logger, service_name, "disable", True)
+            return True
+        except subprocess.CalledProcessError as e:
+            self.log_manager.log_service_change(self.logger, service_name, "disable", False)
+            return False
     
     def disable_all_cortana(self) -> bool:
         """
@@ -193,9 +187,10 @@ class CortanaManager:
         print("Warning: This will only disable Cortana personal assistant features.")
         print("Core Windows Search functionality will remain intact.")
         
+        # Only perform registry and service operations
         results = {
             "Registry": self.disable_cortana_registry(),
-            "Tasks": self.disable_cortana_tasks()
+            "Service": self.disable_cortana_service()
         }
         
         success = all(results.values())
