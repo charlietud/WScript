@@ -6,7 +6,7 @@ from src.core.admin_check import AdminCheck
 def print_header():
     """Print a formatted header for the application."""
     print("\n" + "="*50)
-    print("Windows System Customization Tool")
+    print("WScript - Customization and Automation Tool")
     print("="*50 + "\n")
 
 def print_section_header(title):
@@ -18,7 +18,7 @@ def print_section_header(title):
 def main():
     # Set up argument parser
     parser = argparse.ArgumentParser(
-        description='Windows System Customization Tool',
+        description='WScript - Customization and Automation Tool',
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
     
