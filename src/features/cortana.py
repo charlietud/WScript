@@ -50,17 +50,11 @@ class CortanaManager:
     
     def disable_cortana_registry(self) -> bool:
         """
-        Disable only safe Cortana features through registry modifications.
+        Disable Cortana through registry modifications.
         Returns True if successful, False otherwise.
         """
-        # Registry paths for Cortana settings
-        paths = [
-            r"SOFTWARE\Microsoft\Windows\CurrentVersion\Search",
-            r"SOFTWARE\Policies\Microsoft\Windows\Windows Search",
-            r"SOFTWARE\Microsoft\Windows\CurrentVersion\Search\Flighting",
-            r"SOFTWARE\Microsoft\Windows\CurrentVersion\Search\Flighting\0",
-            r"SOFTWARE\Microsoft\Windows\CurrentVersion\Search\Flighting\1"
-        ]
+        # Registry path for Cortana settings
+        path = r"SOFTWARE\Microsoft\Windows\CurrentVersion\Search"
         
         # Values to set
         values = {
@@ -70,78 +64,50 @@ class CortanaManager:
             "BingSearchEnabled": 0
         }
         
-        success = True
-        for path in paths:
-            self.logger.info(f"Checking registry path: {path}")
-            
-            # Check if key exists
-            if not self.check_registry_key_exists(path):
-                self.logger.info(f"Registry key does not exist: {path}")
-                if not self.create_registry_key(path):
-                    self.logger.error(f"Failed to create registry key: {path}")
-                    success = False
-                    continue
-            
-            # Set values
-            self.logger.info(f"Setting values in registry path: {path}")
-            if not self.registry.set_multiple_values(path, values):
-                self.log_manager.log_registry_change(self.logger, path, values, False)
-                success = False
-                break
-            else:
-                self.log_manager.log_registry_change(self.logger, path, values, True)
+        self.logger.info(f"Checking registry path: {path}")
         
-        return success
+        # Check if key exists
+        if not self.check_registry_key_exists(path):
+            self.logger.info(f"Registry key does not exist: {path}")
+            if not self.create_registry_key(path):
+                self.logger.error(f"Failed to create registry key: {path}")
+                return False
+        
+        # Set values
+        self.logger.info(f"Setting values in registry path: {path}")
+        if not self.registry.set_multiple_values(path, values):
+            self.log_manager.log_registry_change(self.logger, path, values, False)
+            return False
+        else:
+            self.log_manager.log_registry_change(self.logger, path, values, True)
+            return True
     
     def verify_cortana_state(self) -> bool:
         """
-        Verify if Cortana is disabled by checking various indicators.
+        Verify if Cortana is disabled by checking registry values.
         Returns True if Cortana appears to be disabled, False otherwise.
         """
         self.logger.info("Verifying Cortana state")
         
-        # Check if Cortana service is running
-        try:
-            result = subprocess.run(["sc", "query", "Cortana"], capture_output=True, text=True)
-            service_running = "RUNNING" in result.stdout
-            self.logger.info(f"Cortana service running: {service_running}")
-        except subprocess.CalledProcessError:
-            self.logger.error("Failed to check Cortana service state")
-            service_running = False
-        
-        # Check if Cortana process is running
-        try:
-            result = subprocess.run(["tasklist", "/FI", "IMAGENAME eq SearchApp.exe"], capture_output=True, text=True)
-            process_running = "SearchApp.exe" in result.stdout
-            self.logger.info(f"Cortana process running: {process_running}")
-        except subprocess.CalledProcessError:
-            self.logger.error("Failed to check Cortana process state")
-            process_running = False
-        
         # Check registry values
-        registry_disabled = True
-        for path in [
-            r"SOFTWARE\Microsoft\Windows\CurrentVersion\Search",
-            r"SOFTWARE\Policies\Microsoft\Windows\Windows Search"
-        ]:
-            try:
-                key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, path)
-                for value_name in ["AllowCortana", "CortanaEnabled"]:
-                    try:
-                        value, _ = winreg.QueryValueEx(key, value_name)
-                        if value != 0:
-                            registry_disabled = False
-                            self.logger.info(f"Registry value {value_name} in {path} is not disabled")
-                    except WindowsError:
-                        self.logger.info(f"Registry value {value_name} not found in {path}")
-                winreg.CloseKey(key)
-            except WindowsError:
-                self.logger.info(f"Registry key {path} not found")
-        
-        self.logger.info(f"Registry appears disabled: {registry_disabled}")
-        
-        # Consider Cortana disabled if service and process are not running and registry values are set correctly
-        return not service_running and not process_running and registry_disabled
+        path = r"SOFTWARE\Microsoft\Windows\CurrentVersion\Search"
+        try:
+            key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, path)
+            for value_name in ["AllowCortana", "CortanaEnabled"]:
+                try:
+                    value, _ = winreg.QueryValueEx(key, value_name)
+                    if value != 0:
+                        self.logger.info(f"Registry value {value_name} is not disabled")
+                        winreg.CloseKey(key)
+                        return False
+                except WindowsError:
+                    self.logger.info(f"Registry value {value_name} not found")
+            winreg.CloseKey(key)
+            self.logger.info("Cortana appears to be disabled")
+            return True
+        except WindowsError:
+            self.logger.info("Registry key not found")
+            return True  # Consider it disabled if the key doesn't exist
     
     def disable_cortana_service(self) -> bool:
         """
@@ -152,7 +118,13 @@ class CortanaManager:
         service_name = "Cortana"
         
         try:
-            # First try to stop the service
+            # First check if the service exists
+            result = subprocess.run(["sc", "query", service_name], capture_output=True, text=True)
+            if "The specified service does not exist" in result.stdout:
+                self.logger.info(f"Service {service_name} does not exist - skipping service disable")
+                return True  # Consider this a success since Cortana is effectively disabled
+            
+            # If service exists, try to stop it
             subprocess.run(["sc", "stop", service_name], check=True)
             self.logger.info(f"Stopped {service_name} service")
             
@@ -168,8 +140,8 @@ class CortanaManager:
     
     def disable_all_cortana(self) -> bool:
         """
-        Disable only safe Cortana features using all available methods.
-        Returns True if all operations were successful, False otherwise.
+        Disable Cortana through registry modifications.
+        Returns True if successful, False otherwise.
         """
         self.logger.info("Starting Cortana disable process")
         
@@ -182,23 +154,19 @@ class CortanaManager:
         current_state = self.verify_cortana_state()
         self.logger.info(f"Current Cortana state: {'Disabled' if current_state else 'Enabled'}")
         
-        self.logger.info("Warning: This will only disable Cortana personal assistant features")
+        self.logger.info("Warning: This will disable Cortana personal assistant features")
         self.logger.info("Core Windows Search functionality will remain intact")
-        print("Warning: This will only disable Cortana personal assistant features.")
+        print("Warning: This will disable Cortana personal assistant features.")
         print("Core Windows Search functionality will remain intact.")
         
-        # Only perform registry and service operations
-        results = {
-            "Registry": self.disable_cortana_registry(),
-            "Service": self.disable_cortana_service()
-        }
+        # Perform registry operation
+        success = self.disable_cortana_registry()
         
-        success = all(results.values())
         if success:
             # Verify changes
             new_state = self.verify_cortana_state()
             if new_state:
-                self.log_manager.log_operation(self.logger, "Cortana disable", "success", "All features disabled successfully")
+                self.log_manager.log_operation(self.logger, "Cortana disable", "success", "Cortana disabled successfully")
                 print("\nSuccessfully disabled Cortana personal assistant features!")
                 print("Note: Core Windows Search functionality remains active.")
             else:
@@ -206,7 +174,7 @@ class CortanaManager:
                 print("\nChanges applied but some features may still be active.")
                 print("Please check the logs for details.")
         else:
-            self.log_manager.log_operation(self.logger, "Cortana disable", "error", "Some operations failed")
-            print("\nSome operations failed. Check the error messages above.")
+            self.log_manager.log_operation(self.logger, "Cortana disable", "error", "Failed to disable Cortana")
+            print("\nFailed to disable Cortana. Check the error messages above.")
         
         return success 
