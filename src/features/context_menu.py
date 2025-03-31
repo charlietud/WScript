@@ -27,6 +27,3 @@ class ContextMenuManager:
             return True
         except WindowsError:
             return False
-
-# Call the function where appropriate in your code
-create_old_context_menu_key()
