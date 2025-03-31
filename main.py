@@ -3,6 +3,7 @@ from src.features.telemetry import TelemetryManager
 from src.features.cortana import CortanaManager
 from src.core.admin_check import AdminCheck
 from src.features.context_menu import ContextMenuManager
+from src.features.copilot import CopilotManager
 
 def print_header():
     """Print a formatted header for the application."""
@@ -39,6 +40,11 @@ def main():
         action='store_true',
         help='Activate older Windows 10 context menu'
     )
+    parser.add_argument(
+        '--copilot',
+        action='store_true',
+        help='Disables Windows Copilot'
+    )
     
     # Parse arguments
     args = parser.parse_args()
@@ -55,6 +61,7 @@ def main():
     telemetry = TelemetryManager()
     cortana = CortanaManager()
     context_menu = ContextMenuManager()
+    copilot = CopilotManager()
 
     # Handle command line arguments
     if args.telemetry:
@@ -66,6 +73,9 @@ def main():
     elif args.context_menu:
         print_section_header("Activating Win10 Context Menu")
         context_menu.old_context_menu_all()
+    elif args.copilot:
+        print_section_header("Disabling Copilot")
+        copilot.disable_copilot()
     else:
         print("No options specified. Use one of the following options:")
         print("\nAvailable options:")
