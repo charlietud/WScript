@@ -4,6 +4,7 @@ from src.features.cortana import CortanaManager
 from src.core.admin_check import AdminCheck
 from src.features.context_menu import ContextMenuManager
 from src.features.copilot import CopilotManager
+from src.features.intscan import IntegrityCheckManager
 
 def print_header():
     """Print a formatted header for the application."""
@@ -45,6 +46,11 @@ def main():
         action='store_true',
         help='Disables Windows Copilot'
     )
+    parser.add_argument(
+        '--integrity',
+        action='store_true',
+        help='Runs SFC and DISM integrity checks'
+    )
     
     # Parse arguments
     args = parser.parse_args()
@@ -62,6 +68,7 @@ def main():
     cortana = CortanaManager()
     context_menu = ContextMenuManager()
     copilot = CopilotManager()
+    integrity = IntegrityCheckManager
 
     # Handle command line arguments
     if args.telemetry:
@@ -76,6 +83,9 @@ def main():
     elif args.copilot:
         print_section_header("Disabling Copilot")
         copilot.disable_copilot()
+    elif args.integrity:
+        print_section_header("Running integrity checks")
+        integrity.run_integrity_check()
     else:
         print("No options specified. Use one of the following options:")
         print("\nAvailable options:")
@@ -83,6 +93,7 @@ def main():
         print("  --cortana     Disable Cortana")
         print("  --context-menu     Activate Win10 Context Menu")
         print("  --copilot     Disable Copilot")
+        print("  --integrity     Runs integrity checks using SFC and DISM")
         print("  --help        Show this help message")
 
 if __name__ == "__main__":
