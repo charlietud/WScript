@@ -79,9 +79,10 @@ def main():
     else:
         print("No options specified. Use one of the following options:")
         print("\nAvailable options:")
-        print("  --telemetry    Disable Windows telemetry")
+        print("  --telemetry     Disable Windows telemetry")
         print("  --cortana     Disable Cortana")
         print("  --context-menu     Activate Win10 Context Menu")
+        print("  --copilot     Disable Copilot")
         print("  --help        Show this help message")
 
 if __name__ == "__main__":
