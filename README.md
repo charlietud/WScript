@@ -10,6 +10,18 @@ A Python-based command-line tool for managing Windows system settings and privac
   - Manages telemetry-related scheduled tasks
   - Safe and reversible changes
 
+- **Disable both Cortana and Copilot**
+  - Reversible changes
+  - Modifies registry and disables services
+
+- **Enable Win10 context menu**
+  - This option enables the replaces the Windows 11 context menu with the one in Windows 10
+
+- **Integrity Checks**
+  - Runs both 'sfc' and 'DISM' command utilities to check for system integrity issues
+
+- **Rollback** - *Coming Soon*
+
 ## Requirements
 
 - Windows 10/11
@@ -20,8 +32,8 @@ A Python-based command-line tool for managing Windows system settings and privac
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/wscript.git
-   cd wscript
+   git clone https://github.com/charlietud/WScript
+   cd WScript
    ```
 
 2. No additional package installation required - the tool uses built-in Python modules.
@@ -31,11 +43,8 @@ A Python-based command-line tool for managing Windows system settings and privac
 The tool requires administrator privileges to run. Open PowerShell or Command Prompt as Administrator and run:
 
 ```bash
-# Show help
-python main.py --help
-
-# Disable telemetry
-python main.py --telemetry
+# Runs script and shows all the options available
+python main.py
 ```
 
 ## Project Structure
@@ -45,9 +54,14 @@ wscript/
 ├── src/
 │   ├── core/           # Core functionality
 │   │   ├── admin_check.py
-│   │   ├── registry_manager.py
-│   │   └── service_manager.py
+│   │   ├── log_manager.py
+│   │   ├── service_manager.py
+│   │   └── registry_manager.py
 │   └── features/       # Feature implementations
+│       ├── context_menu.py
+│       ├── copilot.py
+│       ├── cortana.py
+│       ├── intscan.py
 │       └── telemetry.py
 ├── main.py            # Main entry point
 └── requirements.txt   # Python dependencies
@@ -62,7 +76,7 @@ wscript/
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome! Please feel free to submit a PR.
 
 ## License
 
