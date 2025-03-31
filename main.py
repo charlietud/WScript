@@ -2,6 +2,7 @@ import argparse
 from src.features.telemetry import TelemetryManager
 from src.features.cortana import CortanaManager
 from src.core.admin_check import AdminCheck
+from src.features.context_menu import ContextMenuManager
 
 def print_header():
     """Print a formatted header for the application."""
@@ -33,6 +34,11 @@ def main():
         action='store_true',
         help='Disable Cortana'
     )
+    parser.add_argument(
+        '--context-menu',
+        action='store_true',
+        help='Activate older Windows 10 context menu'
+    )
     
     # Parse arguments
     args = parser.parse_args()
@@ -48,6 +54,7 @@ def main():
     # Initialize feature managers
     telemetry = TelemetryManager()
     cortana = CortanaManager()
+    context_menu = ContextMenuManager()
 
     # Handle command line arguments
     if args.telemetry:
@@ -56,11 +63,18 @@ def main():
     elif args.cortana:
         print_section_header("Disabling Cortana")
         cortana.disable_all_cortana()
+    elif args.context_menu:
+        print_section_header("Activating Win10 Context Menu")
+        if context_menu.check_key_exists():
+            print("Win10 Context Menu is already activated.")
+        else:
+            context_menu.create_old_context_menu_key()
     else:
         print("No options specified. Use one of the following options:")
         print("\nAvailable options:")
         print("  --telemetry    Disable Windows telemetry")
         print("  --cortana     Disable Cortana")
+        print("  --context-menu     Activate Win10 Context Menu")
         print("  --help        Show this help message")
 
 if __name__ == "__main__":
