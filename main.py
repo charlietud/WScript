@@ -65,10 +65,7 @@ def main():
         cortana.disable_all_cortana()
     elif args.context_menu:
         print_section_header("Activating Win10 Context Menu")
-        if context_menu.check_key_exists():
-            print("Win10 Context Menu is already activated.")
-        else:
-            context_menu.create_old_context_menu_key()
+        context_menu.old_context_menu_all()
     else:
         print("No options specified. Use one of the following options:")
         print("\nAvailable options:")

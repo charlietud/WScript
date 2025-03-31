@@ -1,4 +1,5 @@
 import winreg
+import subprocess
 
 class ContextMenuManager:
     def __init__(self):
@@ -27,3 +28,20 @@ class ContextMenuManager:
             return True
         except WindowsError:
             return False
+        
+    def restart_explorer(self):
+        try:
+            #Stop the process explorer
+            subprocess.run(["taskkill","/f", "/im", "explorer.exe"], check=True)
+            #Start it
+            subprocess.run(["start", "explorer.exe"], shell=True)
+            print("Explorer restarted")
+        except subprocess.CalledProcessError as e:
+            print(f"Failed to restart: {str(e)}")
+
+    def old_context_menu_all(self):
+        if self.check_key_exists():
+            print("Win10 context menu already active")
+        else:
+            self.create_old_context_menu_key()
+            self.restart_explorer()
